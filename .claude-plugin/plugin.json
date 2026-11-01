@@ -1,10 +1,10 @@
 {
   "name": "research-wiki-kit",
   "displayName": "Research Wiki Kit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Zotero, Obsidian, Claude로 만드는 연구 시스템용 스킬 모음. 한국어 논문을 포함한 PDF를 인용 가능한 Zotero 항목으로 등록합니다.",
   "author": {
-    "name": "Brian Choi (Brain Trinity)"
+    "name": "자기개발자 BC (Brain Trinity)"
   },
   "homepage": "https://github.com/BrianJChoi/research-wiki-kit",
   "repository": "https://github.com/BrianJChoi/research-wiki-kit",

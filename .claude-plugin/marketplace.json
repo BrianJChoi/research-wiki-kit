@@ -1,7 +1,9 @@
 {
   "name": "brain-trinity",
   "description": "Brain Trinity 연구 도구 모음",
-  "owner": { "name": "Brian Choi (Brain Trinity)" },
+  "owner": {
+    "name": "자기개발자 BC (Brain Trinity)"
+  },
   "plugins": [
     {
       "name": "research-wiki-kit",

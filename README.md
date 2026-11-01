@@ -46,6 +46,10 @@ Claude에게 이렇게 말하면 됩니다.
 
 시험판입니다. 맥에서 시험했고 Windows는 시험 중입니다. AI가 읽은 서지 값은 원문과 대조해 주세요.
 
+## 만든 사람
+
+자기개발자 BC (Brain Trinity)
+
 ## 라이선스
 
 MIT. 실행할 때 내려받는 도구는 각자의 라이선스를 따릅니다 (PyMuPDF: AGPL-3.0, RapidOCR: Apache-2.0).
