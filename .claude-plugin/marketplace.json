@@ -1,0 +1,12 @@
+{
+  "name": "brain-trinity",
+  "description": "Brain Trinity 연구 도구 모음",
+  "owner": { "name": "Brian Choi (Brain Trinity)" },
+  "plugins": [
+    {
+      "name": "research-wiki-kit",
+      "source": "./",
+      "description": "한국어 논문을 포함한 PDF를 인용 가능한 Zotero 항목으로 등록합니다."
+    }
+  ]
+}
