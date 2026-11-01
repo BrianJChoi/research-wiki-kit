@@ -117,13 +117,14 @@ def add_text_layer(page: pymupdf.Page, lines: list[dict], font_path: str) -> Non
         baseline = line["y1"] * height - box_height * 0.2
         text_width = font.text_length(text, fontsize=size) or 1
         scale = (line["x1"] - line["x0"]) * width / text_width
+        point = pymupdf.Point(x, baseline)
         page.insert_text(
-            (x, baseline),
+            point,
             text,
             fontname="ocrkr",
             fontsize=size,
             render_mode=3,
-            morph=(pymupdf.Point(x, baseline), pymupdf.Matrix(scale, 1)),
+            morph=(point, pymupdf.Matrix(scale, 1)),
         )
 
 
@@ -151,15 +152,30 @@ def main() -> int:
         engine = "vision" if platform.system() == "Darwin" and shutil.which("swift") else "rapidocr"
 
     doc = pymupdf.open(args.input)
+    if doc.needs_pass:
+        print("암호가 걸렸거나 DRM으로 보호된 PDF라서 처리할 수 없습니다.", file=sys.stderr)
+        return 1
     indexes = [i for i in range(doc.page_count) if len(doc[i].get_text().strip()) < MIN_PAGE_CHARS]
     if not indexes:
         print(json.dumps({"status": "skipped", "reason": "이미 글자 정보가 있습니다", "input": str(args.input)}, ensure_ascii=False))
         return 0
 
+    # 회전이 지정된 스캔본은 보이는 모습을 유지한 채 회전을 풀어 좌표를 단순하게 맞춘다.
+    for index in indexes:
+        if doc[index].rotation:
+            doc[index].remove_rotation()
+
     font_path = find_font()
     with tempfile.TemporaryDirectory() as folder:
         paths = render(doc, indexes, args.dpi, Path(folder))
-        pages = ocr_vision(paths) if engine == "vision" else ocr_rapid(paths)
+        if engine == "vision":
+            try:
+                pages = ocr_vision(paths)
+            except (subprocess.CalledProcessError, ValueError):
+                # 맥의 swift는 Xcode 도구가 없으면 실행되지 않으므로 RapidOCR로 넘어간다.
+                engine = "rapidocr"
+        if engine == "rapidocr":
+            pages = ocr_rapid(paths)
 
     for index, lines in zip(indexes, pages):
         add_text_layer(doc[index], lines, font_path)

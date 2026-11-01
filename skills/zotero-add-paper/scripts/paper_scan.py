@@ -30,10 +30,23 @@ MIN_TEXT_CHARS = 200
 SCAN_PAGES = 3
 
 
+def base_name(path: Path) -> str:
+    return re.sub(r"(_ocr|_linked|\.pdf)+$", "", path.name, flags=re.IGNORECASE).lower()
+
+
 def find_pdfs(target: Path) -> list[Path]:
     if target.is_file():
         return [target]
-    return sorted(p for p in target.rglob("*") if p.suffix.lower() == ".pdf" and not p.name.startswith("."))
+    pdfs = sorted(p for p in target.rglob("*") if p.suffix.lower() == ".pdf" and not p.name.startswith("."))
+    # 원본과 OCR·링크 사본이 함께 있으면 가장 많이 처리된 파일 하나만 남긴다.
+    best: dict[tuple, Path] = {}
+    for path in pdfs:
+        key = (path.parent, base_name(path))
+        rank = ("_ocr" in path.name.lower()) + 2 * ("_linked" in path.name.lower())
+        current = best.get(key)
+        if current is None or rank > ("_ocr" in current.name.lower()) + 2 * ("_linked" in current.name.lower()):
+            best[key] = path
+    return sorted(best.values())
 
 
 def file_hash(path: Path) -> str:
@@ -104,6 +117,9 @@ def scan(path: Path, use_crossref: bool) -> dict:
         entry.update(status="error", error=str(error))
         return entry
     with doc:
+        if doc.needs_pass:
+            entry.update(status="error", error="암호가 걸렸거나 DRM으로 보호된 PDF입니다")
+            return entry
         sample = "".join(doc[i].get_text() for i in range(min(SCAN_PAGES, doc.page_count)))
         chars = len(sample.strip())
         entry.update(
@@ -161,7 +177,8 @@ def main() -> int:
         entry["route"] = route(entry)
         papers.append(entry)
         args.out.write_text(json.dumps({"papers": papers}, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"[{entry['route']}] {path.name} | DOI: {entry.get('doi') or '없음'}")
+        detail = entry.get("error") or f"DOI: {entry.get('doi') or '없음'}"
+        print(f"[{entry['route']}] {path.name} | {detail}")
 
     counts: dict[str, int] = {}
     for entry in papers:
