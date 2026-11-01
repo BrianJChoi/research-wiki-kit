@@ -25,7 +25,7 @@ Zotero, Obsidian, Claude로 연구 시스템을 만드는 분을 위한 스킬 �
 
 **방법 1. 폴더 복사 (터미널 없이)**
 
-[최신 zip](https://github.com/BrianJChoi/research-wiki-kit/archive/refs/heads/main.zip)을 받아 압축을 풀고, `research-wiki-kit` 폴더를 `~/.claude/skills/` 아래에 넣은 뒤 Claude를 다시 시작합니다. Windows에서는 `%USERPROFILE%\.claude\skills\`입니다.
+[v0.2.1 zip](https://github.com/BrianJChoi/research-wiki-kit/archive/refs/tags/v0.2.1.zip)을 받아 압축을 풀고, `research-wiki-kit-0.2.1` 폴더 이름을 `research-wiki-kit`로 바꿔 `~/.claude/skills/` 아래에 넣은 뒤 Claude를 다시 시작합니다. Windows에서는 `%USERPROFILE%\.claude\skills\`입니다.
 
 **방법 2. Claude Code 터미널**
 
