@@ -34,6 +34,29 @@ from helpers import (
 
 LINES = ["한글 시험 문장입니다", "Second line of generated text"]
 LONG_LINES = ["생성형 인공지능을 활용한 수업 사례를 살펴본 시험용 문장입니다."] * 4
+FAKE_RAPIDOCR = """\
+from rapidocr.utils.download_file import DownloadFileException
+
+
+class LangRec:
+    KOREAN = "korean"
+
+
+class ModelType:
+    MOBILE = "mobile"
+
+
+class OCRVersion:
+    PPOCRV5 = "PP-OCRv5"
+
+
+class RapidOCR:
+    def __init__(self, params=None):
+        pass
+
+    def __call__(self, path):
+        raise DownloadFileException("Failed to download korean_PP-OCRv5_rec_mobile.onnx")
+"""
 
 
 class OcrCase(PdfCase):
@@ -180,13 +203,22 @@ class EngineTest(OcrCase):
         self.assertIn("글꼴", str(stopped.exception))
         self.assertFalse((self.dir / "scan_ocr.pdf").exists())
 
-
     # 알려진 문제: 첫 실행에 한국어 모델을 내려받지 못하면 쉬운 안내 없이 traceback으로 멈춘다.
+    # 실제 출력을 보려고 별도 프로세스로 돌리고, 내려받기에 실패하는 가짜 rapidocr 패키지를 쓴다.
     @unittest.expectedFailure
     def test_model_download_failure_stops_with_message(self):
-        with mock.patch.object(self.ocr, "ocr_rapid", side_effect=ConnectionError("download failed")):
-            code, _ = call_main(self.ocr, self.image, "--engine", "rapidocr")
-        self.assertEqual(code, 1)
+        package = self.dir / "fake" / "rapidocr"
+        (package / "utils").mkdir(parents=True)
+        (package / "__init__.py").write_text(FAKE_RAPIDOCR, encoding="utf-8")
+        (package / "utils" / "__init__.py").write_text("", encoding="utf-8")
+        (package / "utils" / "download_file.py").write_text(
+            "class DownloadFileException(Exception):\n    pass\n", encoding="utf-8"
+        )
+        done = run_cli("paper_ocr.py", self.image, "--engine", "rapidocr", env={"PYTHONPATH": str(package.parent)})
+        self.assertEqual(done.returncode, 1)
+        self.assertNotIn("Traceback", done.stdout + done.stderr)
+        self.assertRegex(done.stderr, "모델|내려받|다운로드")
+        self.assertFalse((self.dir / "scan_ocr.pdf").exists())
 
 
 class SafetyTest(OcrCase):

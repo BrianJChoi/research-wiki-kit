@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -142,13 +143,14 @@ def goto_links(path: Path) -> list[dict]:
     return found
 
 
-def run_cli(script: str, *args, cwd: Path | None = None) -> subprocess.CompletedProcess:
+def run_cli(script: str, *args, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
     """사용자가 실행하듯 스크립트를 별도 프로세스로 돌린다."""
     return subprocess.run(
         [sys.executable, str(SCRIPTS / script), *[str(arg) for arg in args]],
         capture_output=True,
         encoding="utf-8",
         cwd=cwd,
+        env={**os.environ, **(env or {})},
     )
 
 
