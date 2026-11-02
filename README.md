@@ -46,6 +46,23 @@ Claude에게 이렇게 말하면 됩니다.
 
 시험판입니다. 맥에서 시험했고 Windows는 시험 중입니다. AI가 읽은 서지 값은 원문과 대조해 주세요.
 
+## 회귀 시험
+
+스크립트를 고친 사람이 돌리는 시험입니다. 쓰는 데는 필요 없습니다.
+
+```text
+uv run tests/run.py
+```
+
+시험용 PDF는 실행할 때 코드로 만듭니다. 결과는 아래처럼 나뉩니다.
+
+- **실제로 돕니다:** `paper_scan`, `paper_ocr`, `paper_link`의 명령 실행과 PDF 처리, 맥의 Apple Vision OCR
+- **가짜로 대신합니다:** Crossref 응답, Vision·RapidOCR 시험을 뺀 OCR 결과
+- **따로 켭니다:** 실제 RapidOCR 시험은 모델을 내려받으므로 `RWK_TEST_RAPIDOCR=1`을 붙여 실행합니다
+- **확인하지 않습니다:** Zotero 등록, Zotero 리더에서의 링크 클릭
+
+`expected failure`는 아직 고치지 않은 알려진 문제입니다. 고치면 `unexpected success`로 실패하므로 그때 표시를 지웁니다.
+
 ## 만든 사람
 
 자기개발자 BC (Brain Trinity)
