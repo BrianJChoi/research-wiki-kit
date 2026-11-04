@@ -1,8 +1,8 @@
 {
   "name": "research-wiki-kit",
   "displayName": "Research Wiki Kit",
-  "version": "0.2.1",
-  "description": "Zotero, Obsidian, Claude로 만드는 연구 시스템용 스킬 모음. 한국어 논문을 포함한 PDF를 인용 가능한 Zotero 항목으로 등록합니다.",
+  "version": "0.3.0",
+  "description": "Zotero 문헌, 연구 위키, 학술 검색, 관점 탐색, 근거 기반 원고와 Word 내보내기를 잇는 연구 스킬 모음입니다.",
   "author": {
     "name": "자기개발자 BC (Brain Trinity)"
   },
