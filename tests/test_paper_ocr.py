@@ -6,6 +6,7 @@
 import json
 import os
 import platform
+import random
 import shutil
 import subprocess
 import unittest
@@ -149,6 +150,94 @@ class RotationTest(OcrCase):
         self.assertAlmostEqual(actual.x0, expected.x0, delta=2)
         self.assertAlmostEqual(actual.y0, expected.y0, delta=4)
         self.assertLess(mean_difference(rendered(sideways), rendered(Path(summary["output"]))), 2)
+
+
+def column(x: float, y: float, label: str, count: int) -> list[tuple]:
+    return [(x, y + index * LINE_GAP_LAYOUT, f"{label} {index + 1}번째 줄입니다") for index in range(count)]
+
+
+LINE_GAP_LAYOUT = 15
+TITLE = "생성형 인공지능의 교육적 활용에 관한 시험용 논문 제목을 길게 적은 줄입니다"
+ABSTRACT = "초록 문장은 두 단을 가로질러 한 줄로 길게 이어지는 경우가 많아서 따로 확인합니다"
+CAPTION = "그림 일 설명은 본문 가운데에서 두 단을 가로지르는 줄로 들어가는 경우를 봅니다"
+
+
+class LayoutTest(OcrCase):
+    """엔진이 어떤 순서로 줄을 돌려주든 글자 층은 사람이 읽는 순서로 들어가야 한다.
+
+    Zotero에서 왼쪽 단을 끌어 하이라이트할 때 오른쪽 단이 섞이지 않으려면 글자 층 순서가 단 순서여야 한다.
+    RapidOCR는 줄을 위에서 아래로만 정렬해서 2단의 좌우 줄을 번갈아 돌려준다.
+    """
+
+    def layout(self, lines: list[tuple]) -> tuple[Path, list[dict]]:
+        source = text_pdf(self.dir / "layout.pdf", [lines])
+        image = image_pdf(source, self.dir / "layout_scan.pdf")
+        return image, read_as_ocr(source)[0]
+
+    def stream_order(self, path: Path) -> list[str]:
+        with pymupdf.open(path) as doc:
+            blocks = doc[0].get_text("dict", sort=False)["blocks"]
+        return ["".join(span["text"] for span in line["spans"]).strip() for block in blocks for line in block.get("lines", [])]
+
+    def assert_order(self, lines: list[tuple], expected: list[str]) -> None:
+        image, answer = self.layout(lines)
+        rapid_style = sorted(answer, key=lambda line: (round(line["y0"], 2), line["x0"]))
+        shuffled = list(answer)
+        random.Random(7).shuffle(shuffled)
+        for name, given in (("RapidOCR식 위아래 정렬", rapid_style), ("뒤섞인 순서", shuffled)):
+            with self.subTest(engine_order=name):
+                code, summary = self.fake_ocr(image, "--force", pages=[given])
+                self.assertEqual(code, 0)
+                self.assertEqual(self.stream_order(Path(summary["output"])), expected)
+
+    def test_two_columns_read_left_column_first(self):
+        left = column(60, 120, "왼쪽 단", 8)
+        right = column(320, 120, "오른쪽 단", 8)
+        self.assert_order(left + right, [text for _, _, text in left + right])
+
+    def test_title_and_abstract_span_above_two_columns(self):
+        top = [(60, 80, TITLE), (60, 98, ABSTRACT)]
+        left = column(60, 140, "왼쪽 단", 6)
+        right = column(320, 140, "오른쪽 단", 6)
+        self.assert_order(top + right + left, [text for _, _, text in top + left + right])
+
+    def test_full_width_line_between_two_column_blocks(self):
+        upper_left, upper_right = column(60, 100, "위 왼쪽", 5), column(320, 100, "위 오른쪽", 5)
+        caption = [(60, 200, CAPTION)]
+        lower_left, lower_right = column(60, 240, "아래 왼쪽", 5), column(320, 240, "아래 오른쪽", 5)
+        expected = upper_left + upper_right + caption + lower_left + lower_right
+        self.assert_order(lower_right + caption + upper_right + lower_left + upper_left, [text for _, _, text in expected])
+
+    def test_three_columns(self):
+        columns = [column(x, 120, f"{name} 단", 6) for x, name in ((40, "첫째"), (225, "둘째"), (410, "셋째"))]
+        lines = [line for group in columns for line in group]
+        self.assert_order(lines, [text for _, _, text in lines])
+
+    def test_single_column_stays_top_to_bottom(self):
+        lines = [
+            (LEFT, TOP, LONG_LINES[0]),
+            (LEFT + 20, TOP + 16, "들여쓴 줄도 위에서 아래 순서를 지킵니다 길게 적어 둡니다"),
+            (LEFT, TOP + 32, "짧은 줄"),
+            (LEFT, TOP + 48, LONG_LINES[1]),
+        ]
+        self.assert_order(lines, [text for _, _, text in lines])
+
+    def test_highlight_box_matches_the_seen_line(self):
+        """하이라이트 띠는 글자 층의 줄 상자로 그려지므로 OCR이 본 줄 상자와 같아야 한다."""
+        left = column(60, 120, "왼쪽 단", 3)
+        image, answer = self.layout(left)
+        code, summary = self.fake_ocr(image, "--force", pages=[answer])
+        self.assertEqual(code, 0)
+        with pymupdf.open(summary["output"]) as doc:
+            page = doc[0]
+            boxes = [line["bbox"] for block in page.get_text("dict")["blocks"] for line in block.get("lines", [])]
+            width, height = page.rect.width, page.rect.height
+        self.assertEqual(len(boxes), len(answer))
+        for seen, (x0, y0, x1, y1) in zip(sorted(answer, key=lambda line: line["y0"]), sorted(boxes, key=lambda box: box[1])):
+            self.assertAlmostEqual(y0, seen["y0"] * height, delta=0.5)
+            self.assertAlmostEqual(y1, seen["y1"] * height, delta=0.5)
+            self.assertAlmostEqual(x0, seen["x0"] * width, delta=1)
+            self.assertAlmostEqual(x1, seen["x1"] * width, delta=1)
 
 
 class EngineTest(OcrCase):

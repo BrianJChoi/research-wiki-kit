@@ -1,7 +1,7 @@
 {
   "name": "research-wiki-kit",
   "displayName": "Research Wiki Kit",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Zotero 문헌, 연구 위키, 학술 검색, 관점 탐색, 근거 기반 원고와 Word 내보내기를 잇는 연구 스킬 모음입니다.",
   "author": {
     "name": "자기개발자 BC (Brain Trinity)"

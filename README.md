@@ -25,8 +25,8 @@ Claude Desktop Code 탭 또는 Claude Code, Zotero 10 이상과 Better BibTeX, Z
 
 ## 설치·업데이트
 
-수업 전 설치 안내는 v0.2.1을 유지합니다. v0.3.0은 릴리스 공개 후 [태그 압축본](https://github.com/BrianJChoi/research-wiki-kit/archive/refs/tags/v0.3.0.zip)을 풀어 폴더 이름을 `research-wiki-kit`로 바꾸고 Mac `~/.claude/skills/`, Windows `%USERPROFILE%\.claude\skills\`에 넣습니다. 기존 폴더는 먼저 백업합니다. **새 대화를 여세요.**
-플러그인 방식은 `/plugin marketplace add BrianJChoi/research-wiki-kit`와 `/plugin install research-wiki-kit@brain-trinity`입니다. 이 경로는 저장소 기본 브랜치의 배포 상태를 따르므로 v0.3.0을 고정하려면 태그 압축본을 사용합니다.
+수업 전 설치 안내는 v0.2.1을 유지합니다. v0.3.1은 릴리스 공개 후 [태그 압축본](https://github.com/BrianJChoi/research-wiki-kit/archive/refs/tags/v0.3.1.zip)을 풀어 폴더 이름을 `research-wiki-kit`로 바꾸고 Mac `~/.claude/skills/`, Windows `%USERPROFILE%\.claude\skills\`에 넣습니다. 기존 폴더는 먼저 백업합니다. **새 대화를 여세요.**
+플러그인 방식은 `/plugin marketplace add BrianJChoi/research-wiki-kit`와 `/plugin install research-wiki-kit@brain-trinity`입니다. 이 경로는 저장소 기본 브랜치의 배포 상태를 따르므로 v0.3.1을 고정하려면 태그 압축본을 사용합니다. 이미 v0.3.0을 설치했다면 kit-update로 올립니다.
 
 현재 Claude Code는 `.claude-plugin/plugin.json`이 있는 스킬 폴더를 플러그인으로 읽을 수 있습니다. [공식 스킬 안내](https://code.claude.com/docs/en/skills)를 참고합니다. Windows Code 탭에서 `/research-wiki-kit:paper-note` 등 실제 인식과 권한 승인을 확인합니다. 인식하지 못하면 해당 설치본의 지원 여부를 확인하고 교재의 수동 스킬 복사 절차를 따릅니다.
 
@@ -44,7 +44,7 @@ Claude Desktop Code 탭 또는 Claude Code, Zotero 10 이상과 Better BibTeX, Z
 
 ## 시험과 범위
 
-[시험 안내](tests/README.md)를 확인합니다. 자동 시험과 사람이 확인한 범위, 외부 서비스·Windows·Word 실기 시험을 구분합니다. 기존 PDF 도구의 알려진 문제를 이번 버전에서 고쳤다고 주장하지 않습니다.
+[시험 안내](tests/README.md)를 확인합니다. 자동 시험과 사람이 확인한 범위, 외부 서비스·Windows·Word 실기 시험을 구분합니다. v0.3.1은 OCR 사본의 단 순서와 하이라이트 높이를 고쳤습니다. 그 밖의 기존 PDF 도구 알려진 문제는 시험에 예상 실패로 남아 있습니다.
 
 ## 라이선스
 
