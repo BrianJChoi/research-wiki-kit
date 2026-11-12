@@ -222,6 +222,29 @@ class LayoutTest(OcrCase):
         ]
         self.assert_order(lines, [text for _, _, text in lines])
 
+    def order_of(self, lines: list[dict]) -> list[str]:
+        return [line["text"] for line in self.ocr.reading_order(lines)]
+
+    def test_gutter_edge_on_a_bin_boundary_is_kept(self):
+        """단 끝이 칸 경계와 소수점 끝자리까지 겹쳐도 빈 여백으로 본다 (리뷰어 재현값)."""
+        for left_end in (0.46, 0.46 - 1e-5, 0.46 + 1e-5):
+            with self.subTest(left_end=left_end):
+                lines = []
+                for row in range(3):
+                    top = 0.2 + row * 0.03
+                    lines.append({"text": f"L{row}", "x0": 0.1, "y0": top, "x1": left_end, "y1": top + 0.02})
+                    lines.append({"text": f"R{row}", "x0": 0.54, "y0": top, "x1": 0.9, "y1": top + 0.02})
+                self.assertEqual(self.order_of(lines), ["L0", "L1", "L2", "R0", "R1", "R2"])
+
+    def test_blocks_that_are_not_side_by_side_are_not_columns(self):
+        """오른쪽 위 짧은 제목과 왼쪽 아래 본문은 나란한 두 단이 아니므로 위에서 아래로 읽는다."""
+        lines = [
+            {"text": "본문 1", "x0": 0.1, "y0": 0.50, "x1": 0.45, "y1": 0.52},
+            {"text": "본문 2", "x0": 0.1, "y0": 0.53, "x1": 0.45, "y1": 0.55},
+            {"text": "제목", "x0": 0.55, "y0": 0.10, "x1": 0.9, "y1": 0.12},
+        ]
+        self.assertEqual(self.order_of(lines), ["제목", "본문 1", "본문 2"])
+
     def test_highlight_box_matches_the_seen_line(self):
         """하이라이트 띠는 글자 층의 줄 상자로 그려지므로 OCR이 본 줄 상자와 같아야 한다."""
         left = column(60, 120, "왼쪽 단", 3)

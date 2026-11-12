@@ -150,22 +150,31 @@ def find_gutter(lines: list[dict]) -> tuple[list[dict], list[dict], list[dict]] 
         if index == inner.stop or cover[index] != cover[start]:
             runs.append((start, index - 1))
             start = index
+    # 칸 경계는 소수점 오차가 있어서 줄 끝이 경계에 닿기만 한 것은 가로지른 것으로 보지 않는다.
+    slack = step / 2
     for first, last in sorted(runs, key=lambda run: (cover[run[0]], run[0] - run[1])):
-        low, high = left_edge + first * step, left_edge + (last + 1) * step
-        crossing = [line for line in lines if line["x0"] < high and line["x1"] > low]
-        left = [line for line in lines if line["x1"] <= low]
-        right = [line for line in lines if line["x0"] >= high]
+        low, high = left_edge + first * step + slack, left_edge + (last + 1) * step - slack
+        left, right, crossing = [], [], []
+        for line in lines:
+            if line["x1"] <= low:
+                left.append(line)
+            elif line["x0"] >= high:
+                right.append(line)
+            else:
+                crossing.append(line)
         if not left or not right:
             continue
         if min(line["x0"] for line in right) - max(line["x1"] for line in left) < GUTTER_MIN:
             continue
-        if crossing:
-            # 한 단 글에서 짧은 줄이 우연히 여백처럼 보이는 경우를 막는다. 양쪽 단이 나란히 있어야 한다.
-            side_by_side = min(max(line["y1"] for line in left), max(line["y1"] for line in right)) - max(
-                min(line["y0"] for line in left), min(line["y0"] for line in right)
-            )
-            if len(left) < 2 or len(right) < 2 or side_by_side <= 0:
-                continue
+        # 두 단은 세로로 나란히 서 있어야 한다. 오른쪽 위 제목과 왼쪽 아래 본문처럼 엇갈린 덩어리는 단이 아니다.
+        side_by_side = min(max(line["y1"] for line in left), max(line["y1"] for line in right)) - max(
+            min(line["y0"] for line in left), min(line["y0"] for line in right)
+        )
+        if side_by_side <= 0:
+            continue
+        # 한 단 글에서 짧은 줄이 우연히 여백처럼 보이는 경우를 막는다.
+        if crossing and (len(left) < 2 or len(right) < 2):
+            continue
         return left, right, crossing
     return None
 
